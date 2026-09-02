@@ -1,0 +1,64 @@
+THIRD-PARTY SOFTWARE NOTICES
+
+Mdbora JDBC uses third-party open-source software. These components remain
+subject to their respective copyright notices and license terms.
+
+
+1. H2 Database Engine
+=====================
+
+Project:
+https://h2database.com/
+
+Source code:
+https://github.com/h2database/h2database
+
+Maven coordinates:
+com.h2database:h2
+
+License:
+Mozilla Public License 2.0 or Eclipse Public License 1.0
+
+Mdbora uses H2 under the Mozilla Public License 2.0 option.
+
+This product contains unmodified binary redistributions of the H2 Database
+Engine. H2 is dual-licensed and available under the Mozilla Public License
+2.0 or the Eclipse Public License 1.0.
+
+The complete H2 license information is available at:
+
+https://h2database.com/html/license.html
+
+
+2. Jackcess
+===========
+
+Project:
+https://github.com/spannm/jackcess
+
+Maven coordinates:
+io.github.spannm:jackcess
+
+License:
+Apache License 2.0
+
+Jackcess is a pure Java library for reading and writing Microsoft Access
+MDB and ACCDB database files.
+
+The complete Apache License 2.0 text is available at:
+
+https://www.apache.org/licenses/LICENSE-2.0
+
+
+3. Transitive dependencies
+==========================
+
+H2, Jackcess, and their dependencies may include other open-source
+components. These components remain subject to their own copyright notices
+and license terms.
+
+When Mdbora is consumed through Maven, these dependencies are resolved as
+separate artifacts.
+
+When distributing the Mdbora fat JAR, all applicable notices and license
+files from the packaged dependencies must be preserved.

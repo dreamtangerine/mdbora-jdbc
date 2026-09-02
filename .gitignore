@@ -1,0 +1,66 @@
+# Maven build output
+/target/
+dependency-reduced-pom.xml
+
+# NetBeans private and generated files
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+
+# IntelliJ IDEA
+/.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Visual Studio Code
+/.vscode/
+
+# Java generated files
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# Microsoft Access databases and lock files
+*.mdb
+*.accdb
+*.laccdb
+
+# H2 database files
+*.mv.db
+*.trace.db
+*.lock.db
+
+# Logs
+*.log
+
+# Maven and repository credentials
+settings.xml
+settings-security.xml
+.env
+.env.*
+
+# Signing keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.gpg
+*.pgp
+*.asc
+*.rev
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Some source code
+/src/test/java/io/github/dreamtangerine/mdbora/PerfomanceFileTest.java
