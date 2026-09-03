@@ -10,7 +10,7 @@
 
   <groupId>io.github.dreamtangerine</groupId>
   <artifactId>mdbora-jdbc</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0-alpha.1</version>
   <packaging>jar</packaging>
 
   <name>Mdbora JDBC</name>
@@ -260,7 +260,11 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <version>3.2.8</version>
-
+            <configuration>
+              <keyname>
+                35CFB5E40BE4DAC0AC083F4AF327295487EB6F32
+              </keyname>
+            </configuration>
             <executions>
               <execution>
                 <id>sign-artifacts</id>

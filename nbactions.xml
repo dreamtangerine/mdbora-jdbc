@@ -46,4 +46,26 @@
                 <exec.workingdir></exec.workingdir>
             </properties>
         </action>
+    <action>
+            <actionName>CUSTOM-Verify Release</actionName>
+            <displayName>Verify Release</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>verify</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>release</activatedProfile>
+            </activatedProfiles>
+        </action>
+    <action>
+            <actionName>CUSTOM-Package Bundle</actionName>
+            <displayName>Package Bundle</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>package</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>bundle</activatedProfile>
+            </activatedProfiles>
+        </action>
 </actions>
