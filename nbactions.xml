@@ -68,4 +68,15 @@
                 <activatedProfile>bundle</activatedProfile>
             </activatedProfiles>
         </action>
+    <action>
+            <actionName>CUSTOM-Deploy Maven Central</actionName>
+            <displayName>Deploy Maven Central</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>deploy</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>release</activatedProfile>
+            </activatedProfiles>
+        </action>
 </actions>

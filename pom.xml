@@ -10,7 +10,7 @@
 
   <groupId>io.github.dreamtangerine</groupId>
   <artifactId>mdbora-jdbc</artifactId>
-  <version>0.1.0-alpha.1</version>
+  <version>0.1.0-alpha.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Mdbora JDBC</name>
