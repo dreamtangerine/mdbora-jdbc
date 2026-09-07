@@ -5,9 +5,9 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.virtual;
 
+import io.github.dreamtangerine.mdbora.access.AccessTableResolver;
 import io.github.spannm.jackcess.Table;
 import org.h2.command.query.AllColumnsForPlan;
 import org.h2.engine.SessionLocal;
@@ -24,55 +24,66 @@ import org.h2.table.TableFilter;
 
 final class AccessScanIndex extends Index {
 
-  private final Table accessTable;
+  private final String databaseId;
+  private final String tableName;
 
-  AccessScanIndex(AccessVirtualTable table, Table accessTable) {
+  AccessScanIndex(AccessVirtualTable table, String databaseId, String tableName) {
+
     super(table, 0, "ACCESS_SCAN", IndexColumn.wrap(table.getColumns()), 0, IndexType.createScan(false));
-    
-    this.accessTable = accessTable;
+
+    this.databaseId = databaseId;
+    this.tableName = tableName;
   }
 
   @Override
-  public Cursor find(SessionLocal s, SearchRow first, SearchRow last, boolean reverse) {
+  public Cursor find(SessionLocal session, SearchRow first, SearchRow last, boolean reverse) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
     return new AccessCursor(accessTable, accessTable.iterator());
   }
 
   @Override
-  public double getCost(SessionLocal s, int[] masks, TableFilter[] filters, int filter, SortOrder sort, AllColumnsForPlan all, boolean select) {
-    return 10d + accessTable.getRowCount();
+  public double getCost(SessionLocal session, int[] masks, TableFilter[] filters, int filter, SortOrder sortOrder, AllColumnsForPlan allColumns, boolean select) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
+    return 10.0d + accessTable.getRowCount();
   }
 
   @Override
-  public long getRowCount(SessionLocal s) {
+  public long getRowCount(SessionLocal session) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
     return accessTable.getRowCount();
   }
 
   @Override
-  public long getRowCountApproximation(SessionLocal s) {
+  public long getRowCountApproximation(SessionLocal session) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
     return accessTable.getRowCount();
   }
 
   @Override
-  public void add(SessionLocal s, Row row) {
+  public void add(SessionLocal session, Row row) {
     throw readOnly();
   }
 
   @Override
-  public void remove(SessionLocal s, Row row) {
+  public void remove(SessionLocal session, Row row) {
     throw readOnly();
   }
 
   @Override
-  public void truncate(SessionLocal s) {
+  public void truncate(SessionLocal session) {
     throw readOnly();
   }
 
   @Override
-  public void remove(SessionLocal s) {
+  public void remove(SessionLocal session) {
   }
 
   @Override
-  public void close(SessionLocal s) {
+  public void close(SessionLocal session) {
   }
 
   @Override
@@ -80,11 +91,7 @@ final class AccessScanIndex extends Index {
     return false;
   }
 
-  public long getDiskSpaceUsed() {
-    return 0;
-  }
-
   private DbException readOnly() {
-    return DbException.getUnsupportedException("Mdbora is read only");
+    return DbException.getUnsupportedException("Mdbora is read-only");
   }
 }

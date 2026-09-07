@@ -35,11 +35,11 @@ public final class AccessDatabaseRegistry {
    * @throws IllegalStateException if the identifier is already registered
    */
   public static void register(String id, Database database) {
-    Objects.requireNonNull(id);
-    Objects.requireNonNull(database);
+    Objects.requireNonNull(id, "The database identifier cannot be null");
+    Objects.requireNonNull(database, "The Access database cannot be null");
     
     if (DATABASES.putIfAbsent(id, database) != null) {
-      throw new IllegalStateException("Base ya registrada: " + id);
+      throw new IllegalStateException("Database is already registered: " + id);
     }
   }
 
@@ -54,7 +54,7 @@ public final class AccessDatabaseRegistry {
     Database database = DATABASES.get(id);
     
     if (database == null) {
-      throw new IllegalArgumentException("Base Access no registrada: " + id);
+      throw new IllegalArgumentException("Access database is not registered: " + id);
     }
     
     return database;

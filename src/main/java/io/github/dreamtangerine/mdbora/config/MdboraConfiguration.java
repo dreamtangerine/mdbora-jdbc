@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.config;
 
 import java.sql.SQLException;
@@ -31,14 +30,24 @@ public final class MdboraConfiguration {
    */
   public static final int DEFAULT_MAX_IN_MEMORY_ROWS = 1_000;
 
+  /**
+   * Default linked-table handling.
+   *
+   * <p>
+   * Linked tables are disabled by default because their external targets may be missing, inaccessible or unsupported.</p>
+   */
+  public static final boolean DEFAULT_INCLUDE_LINKED_TABLES = false;
+
   private final boolean readOnly;
   private final int cacheSize;
   private final int maxInMemoryRows;
+  private final boolean includeLinkedTables;
 
-  private MdboraConfiguration(boolean readOnly, int cacheSize, int maxInMemoryRows) {
+  private MdboraConfiguration(boolean readOnly, int cacheSize, int maxInMemoryRows, boolean includeLinkedTables) {
     this.readOnly = readOnly;
     this.cacheSize = cacheSize;
     this.maxInMemoryRows = maxInMemoryRows;
+    this.includeLinkedTables = includeLinkedTables;
   }
 
   /**
@@ -58,10 +67,11 @@ public final class MdboraConfiguration {
     boolean readOnly = readBoolean(properties, MdboraProperty.READ_ONLY, DEFAULT_READ_ONLY);
     int cacheSize = readPositiveInteger(properties, MdboraProperty.CACHE_SIZE, DEFAULT_CACHE_SIZE);
     int maxInMemoryRows = readPositiveInteger(properties, MdboraProperty.MAX_IN_MEMORY_ROWS, DEFAULT_MAX_IN_MEMORY_ROWS);
-
+    boolean includeLinkedTables = readBoolean(properties, MdboraProperty.INCLUDE_LINKED_TABLES, DEFAULT_INCLUDE_LINKED_TABLES);
+    
     validateReadOnly(readOnly);
 
-    return new MdboraConfiguration(readOnly, cacheSize, maxInMemoryRows);
+    return new MdboraConfiguration(readOnly, cacheSize, maxInMemoryRows, includeLinkedTables);
   }
 
   private static void validateReadOnly(boolean readOnly) throws SQLException {
@@ -137,5 +147,14 @@ public final class MdboraConfiguration {
    */
   public int getMaxInMemoryRows() {
     return maxInMemoryRows;
+  }
+
+  /**
+   * Indicates whether linked tables should be exposed.
+   *
+   * @return {@code true} if linked tables should be exposed
+   */
+  public boolean isIncludeLinkedTables() {
+    return includeLinkedTables;
   }
 }

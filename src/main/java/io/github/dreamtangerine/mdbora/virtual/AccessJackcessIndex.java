@@ -5,15 +5,16 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.virtual;
 
+import io.github.dreamtangerine.mdbora.access.AccessTableResolver;
 import io.github.spannm.jackcess.CursorBuilder;
 import io.github.spannm.jackcess.IndexCursor;
 import io.github.spannm.jackcess.Table;
 import java.io.IOException;
 import java.util.Iterator;
 import io.github.dreamtangerine.mdbora.codec.AccessValueCodec;
+import java.util.Arrays;
 import org.h2.command.query.AllColumnsForPlan;
 import org.h2.engine.SessionLocal;
 import org.h2.index.Cursor;
@@ -34,35 +35,50 @@ final class AccessJackcessIndex extends Index {
 
   private static final boolean TRACE = Boolean.getBoolean("mdbora.traceIndexes");
 
-  private final Table accessTable;
-  private final io.github.spannm.jackcess.Index accessIndex;
+  private final String databaseId;
+  private final String tableName;
+  private final String accessIndexName;
 
-  AccessJackcessIndex(AccessVirtualTable table, int id, String name, IndexColumn[] columns, IndexType type, Table accessTable, io.github.spannm.jackcess.Index accessIndex) {
-    super(table, id, name, columns, accessIndex.isUnique() ? columns.length : 0, type);
+  AccessJackcessIndex(AccessVirtualTable table, int id, String name, IndexColumn[] columns, IndexType type, String databaseId, String tableName, String accessIndexName, boolean unique) {
+    super(table, id, name, columns, unique ? columns.length : 0, type);
 
-    this.accessTable = accessTable;
-    this.accessIndex = accessIndex;
+    this.databaseId = databaseId;
+    this.tableName = tableName;
+    this.accessIndexName = accessIndexName;
   }
 
   @Override
   public Cursor find(SessionLocal session, SearchRow first, SearchRow last, boolean reverse) {
+    io.github.spannm.jackcess.Index accessIndex = AccessTableResolver.requireIndex(databaseId, tableName, accessIndexName);
+
+    Cursor result;
+
     try {
-      IndexCursor cursor = CursorBuilder.createCursor(accessIndex);
-      Object[] exact = exactKey(session, first, last);
+      IndexCursor indexCursor = CursorBuilder.createCursor(accessIndex);
+      Object[] exactKey = exactKey(session, first, last, accessIndex);
 
-      if (TRACE) {
-        System.out.printf("Mdbora index: table=%s index=%s exact=%s%n", accessTable.getName(), accessIndex.getName(), exact != null);
+      if (exactKey != null) {
+        trace("table=%s index=%s mode=exact-key key=%s reverse=%s", tableName, accessIndexName, formatKey(exactKey), reverse);
+
+        Iterator<io.github.spannm.jackcess.Row> rows = indexCursor.newEntryIterable(exactKey).iterator();
+        Table accessTable = accessIndex.getTable();
+
+        result = new AccessCursor(accessTable, rows);
+      } else {
+        trace("table=%s index=%s mode=full-table-scan reverse=%s", tableName, accessIndexName, reverse);
+
+        Table accessTable = accessIndex.getTable();
+
+        result = new AccessCursor(accessTable, accessTable.iterator());
       }
-
-      Iterator<io.github.spannm.jackcess.Row> iterator = exact == null ? cursor.iterator() : cursor.newEntryIterable(exact).iterator();
-
-      return new AccessCursor(accessTable, iterator);
     } catch (IOException exception) {
-      throw DbException.convertIOException(exception, accessTable.getName());
+      throw DbException.convert(exception);
     }
+
+    return result;
   }
 
-  private Object[] exactKey(SessionLocal session, SearchRow first, SearchRow last) {
+  private Object[] exactKey(SessionLocal session, SearchRow first, SearchRow last, io.github.spannm.jackcess.Index accessIndex) {
     Object[] result = null;
 
     if (first != null && last != null) {
@@ -81,7 +97,7 @@ final class AccessJackcessIndex extends Index {
           exact = false;
         } else {
           String columnName = accessIndex.getColumns().get(i).getName();
-          io.github.spannm.jackcess.Column accessColumn = accessTable.getColumn(columnName);
+          io.github.spannm.jackcess.Column accessColumn = accessIndex.getTable().getColumn(columnName);
 
           values[i] = AccessValueCodec.toJackcessIndex(accessColumn, firstValue);
         }
@@ -96,26 +112,26 @@ final class AccessJackcessIndex extends Index {
   }
 
   @Override
-  public double getCost(SessionLocal session, int[] masks, TableFilter[] filters, int filter, SortOrder sort, AllColumnsForPlan all,boolean select) {
-
+  public double getCost(SessionLocal session, int[] masks, TableFilter[] filters, int filter, SortOrder sort, AllColumnsForPlan all, boolean select) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
     long rowCount = Math.max(1L, accessTable.getRowCount());
+    IndexConditions conditions = null;
 
     double cost;
 
     if (masks == null) {
       cost = fullIndexScanCost(rowCount);
     } else {
-      IndexConditions conditions
-              = analyzeIndexConditions(masks);
+      conditions = analyzeIndexConditions(masks);
 
-      if (conditions.isUsable()) {
-        cost = selectiveIndexCost(
-                rowCount,
-                conditions);
+      if (conditions.isExactKey(indexColumns.length)) {
+        cost = selectiveIndexCost(rowCount, conditions);
       } else {
         cost = fullIndexScanCost(rowCount);
       }
     }
+
+    traceCost(rowCount, conditions, cost);
 
     return cost;
   }
@@ -167,7 +183,7 @@ final class AccessJackcessIndex extends Index {
   }
 
   private static final class IndexConditions {
-    
+
     private final int equalities;
     private final boolean range;
 
@@ -184,19 +200,22 @@ final class AccessJackcessIndex extends Index {
       return range;
     }
 
-    private boolean isUsable() {
-      return equalities > 0 || range;
+    private boolean isExactKey(int indexColumnCount) {
+      return equalities == indexColumnCount && !range;
     }
   }
 
-
   @Override
   public long getRowCount(SessionLocal s) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
     return accessTable.getRowCount();
   }
 
   @Override
   public long getRowCountApproximation(SessionLocal s) {
+    Table accessTable = AccessTableResolver.requireTable(databaseId, tableName);
+
     return accessTable.getRowCount();
   }
 
@@ -234,5 +253,53 @@ final class AccessJackcessIndex extends Index {
 
   private DbException readOnly() {
     return DbException.getUnsupportedException("Mdbora is read only");
+  }
+
+  /**
+   * Writes an index diagnostic message when index tracing is enabled.
+   *
+   * @param message diagnostic message
+   * @param arguments message format arguments
+   */
+  private static void trace(String message, Object... arguments) {
+
+    if (TRACE) {
+      System.err.printf(java.util.Locale.ROOT, "[mdbora-index] " + message + "%n", arguments);
+    }
+  }
+
+  /**
+   * Formats an index key for diagnostic output.
+   *
+   * @param key index key values
+   * @return formatted key
+   */
+  private static String formatKey(Object[] key) {
+    return Arrays.toString(key);
+  }
+
+  /**
+   * Writes diagnostic information about an index cost calculation.
+   *
+   * @param rowCount approximate number of rows in the table
+   * @param conditions analyzed index conditions, or {@code null}
+   * @param cost calculated H2 index cost
+   */
+  private void traceCost(long rowCount, IndexConditions conditions, double cost) {
+    if (TRACE) {
+      int equalities = 0;
+      boolean range = false;
+      boolean exactKey = false;
+
+      if (conditions != null) {
+        equalities = conditions.equalities();
+
+        range = conditions.hasRange();
+
+        exactKey = conditions.isExactKey(indexColumns.length);
+      }
+
+      trace("table=%s index=%s phase=cost rows=%d equalities=%d columns=%d range=%s exactKey=%s cost=%.3f", tableName, accessIndexName, rowCount, equalities, indexColumns.length, range, exactKey, cost);
+    }
   }
 }

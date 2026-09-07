@@ -10,7 +10,7 @@
 
   <groupId>io.github.dreamtangerine</groupId>
   <artifactId>mdbora-jdbc</artifactId>
-  <version>0.1.0-alpha.2-SNAPSHOT</version>
+  <version>0.1.0-alpha.2</version>
   <packaging>jar</packaging>
 
   <name>Mdbora JDBC</name>
@@ -86,6 +86,25 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.5.1</version>
+
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+
+            <manifestEntries>
+              <Automatic-Module-Name>io.github.dreamtangerine.mdbora</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.1</version>
 
@@ -100,7 +119,7 @@
         <version>3.5.4</version>
 
         <configuration>
-          <argLine>-Xms16m -Xmx64m</argLine>
+          <argLine>-Xms8m -Xmx11m</argLine>
         </configuration>
       </plugin>
 
@@ -209,6 +228,13 @@
                   <createDependencyReducedPom>false</createDependencyReducedPom>
                   
                   <filters>
+                    <filter>
+                      <artifact>com.h2database:h2</artifact>
+                      <excludes>
+                        <exclude>META-INF/services/java.sql.Driver</exclude>    
+                      </excludes>
+                    </filter>
+  
                     <filter>
                       <artifact>*:*</artifact>
 

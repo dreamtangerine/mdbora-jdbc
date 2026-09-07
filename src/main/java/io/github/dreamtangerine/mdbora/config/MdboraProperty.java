@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.config;
 
 /**
@@ -13,14 +12,25 @@ package io.github.dreamtangerine.mdbora.config;
  */
 public final class MdboraProperty {
 
-  /** Connection read-only mode property. */
+  /**
+   * Connection read-only mode property.
+   */
   public static final String READ_ONLY = "readOnly";
 
-  /** Internal cache memory budget property, expressed in KiB. */
+  /**
+   * Internal cache memory budget property, expressed in KiB.
+   */
   public static final String CACHE_SIZE = "cacheSize";
 
-  /** Maximum number of rows retained in memory by supported operations. */
+  /**
+   * Maximum number of rows retained in memory by supported operations.
+   */
   public static final String MAX_IN_MEMORY_ROWS = "maxInMemoryRows";
+
+  /**
+   * Controls whether linked tables are exposed by the Mdbora connection.
+   */
+  public static final String INCLUDE_LINKED_TABLES = "includeLinkedTables";
 
   private MdboraProperty() {
   }

@@ -5,19 +5,18 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.internal;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
 import java.util.stream.Stream;
 import io.github.dreamtangerine.mdbora.config.MdboraConfiguration;
+import java.util.Properties;
 
 /**
  * Manages the temporary SQL catalog used internally by Mdbora.
@@ -55,25 +54,45 @@ public final class TemporaryH2 implements AutoCloseable {
 
     Path directory = Files.createTempDirectory("mdbora-");
     Connection connection = null;
-    TemporaryH2 result = null;
 
     try {
       Path catalogFile = directory.resolve("catalog").toAbsolutePath();
       String url = createJdbcUrl(catalogFile);
 
-      connection = DriverManager.getConnection(url, "sa", "");
+      connection = openConnection(url);
 
       configure(connection, configuration);
 
-      result = new TemporaryH2(directory, connection);
+      return new TemporaryH2(directory, connection);
     } catch (SQLException | RuntimeException exception) {
       closeConnectionAfterFailure(connection);
       deleteDirectoryAfterFailure(directory);
 
       throw exception;
     }
+  }
 
-    return result;
+  /**
+   * Opens the internal H2 connection without registering H2 as a public JDBC driver.
+   *
+   * @param url internal H2 JDBC URL
+   * @return open H2 connection
+   * @throws SQLException if the internal connection cannot be opened
+   */
+  private static Connection openConnection(String url) throws SQLException {
+    org.h2.Driver driver = new org.h2.Driver();
+    Properties properties = new Properties();
+
+    properties.setProperty("user", "sa");
+    properties.setProperty("password", "");
+
+    Connection connection = driver.connect(url, properties);
+
+    if (connection == null) {
+      throw new SQLException("The internal H2 driver did not accept the URL: " + url);
+    }
+
+    return connection;
   }
 
   /**

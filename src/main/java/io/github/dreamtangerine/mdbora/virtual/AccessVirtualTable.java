@@ -5,11 +5,11 @@
  *
  * Copyright (c) 2026 Dreamtangerine
  */
-
 package io.github.dreamtangerine.mdbora.virtual;
 
+import io.github.dreamtangerine.mdbora.access.AccessTableResolver;
 import io.github.spannm.jackcess.Index;
-import io.github.spannm.jackcess.Table;
+import io.github.spannm.jackcess.TableDefinition;
 import java.util.ArrayList;
 import org.h2.command.ddl.CreateTableData;
 import org.h2.engine.NullsDistinct;
@@ -21,45 +21,50 @@ import org.h2.table.*;
 
 final class AccessVirtualTable extends TableBase {
 
-  private final Table accessTable;
   private final ArrayList<org.h2.index.Index> indexes = new ArrayList<>();
   private final AccessScanIndex scan;
 
-  AccessVirtualTable(CreateTableData data, Table accessTable) {
+  private final String databaseId;
+  private final String tableName;
+
+  AccessVirtualTable(CreateTableData data, String databaseId, String tableName, TableDefinition definition) {
     super(data);
 
-    this.accessTable = accessTable;
-    this.scan = new AccessScanIndex(this, accessTable);
+    this.databaseId = databaseId;
+    this.tableName = tableName;
+
+    this.scan = new AccessScanIndex(this, databaseId, tableName);
 
     indexes.add(scan);
 
-    registerAccessIndexes(accessTable);
+    registerAccessIndexes(definition);
   }
 
-  private void registerAccessIndexes(Table accessTable) {
+  private void registerAccessIndexes(TableDefinition definition) {
+
     int indexId = 1;
 
-    for (Index sourceIndex : accessTable.getIndexes()) {
-      boolean indexCreated = registerAccessIndex(indexId, sourceIndex, accessTable);
-
-      if (indexCreated) {
+    for (io.github.spannm.jackcess.Index sourceIndex : definition.getIndexes()) {
+      if (registerAccessIndex(indexId, sourceIndex)) {
         indexId++;
       }
     }
   }
 
-  private boolean registerAccessIndex(int indexId, Index sourceIndex, Table accessTable) {
+  private boolean registerAccessIndex(int indexId, io.github.spannm.jackcess.Index sourceIndex) {
     IndexColumn[] indexColumns = createIndexColumns(sourceIndex);
-    boolean indexCreated = indexColumns.length > 0;
+    boolean created = indexColumns.length > 0;
 
-    if (indexCreated) {
+    if (created) {
       IndexType indexType = createIndexType(sourceIndex, indexColumns.length);
-      AccessJackcessIndex index = new AccessJackcessIndex(this, indexId, sourceIndex.getName(), indexColumns, indexType, accessTable, sourceIndex);
+      boolean unique = sourceIndex.isPrimaryKey() || sourceIndex.isUnique();
+
+      AccessJackcessIndex index = new AccessJackcessIndex(this, indexId, sourceIndex.getName(), indexColumns, indexType, databaseId, tableName, sourceIndex.getName(), unique);
 
       indexes.add(index);
     }
 
-    return indexCreated;
+    return created;
   }
 
   private IndexColumn[] createIndexColumns(Index sourceIndex) {
@@ -119,12 +124,13 @@ final class AccessVirtualTable extends TableBase {
 
   @Override
   public long getRowCount(SessionLocal s) {
-    return accessTable.getRowCount();
+    
+    return AccessTableResolver.requireTable(databaseId, tableName).getRowCount();
   }
 
   @Override
   public long getRowCountApproximation(SessionLocal s) {
-    return accessTable.getRowCount();
+    return AccessTableResolver.requireTable(databaseId, tableName).getRowCount();
   }
 
   @Override

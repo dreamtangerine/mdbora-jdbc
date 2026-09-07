@@ -4,7 +4,7 @@
         <actionName>run</actionName>
         <goals><goal>process-classes</goal><goal>org.codehaus.mojo:exec-maven-plugin:3.5.1:exec</goal></goals>
         <properties>
-            <exec.vmArgs>-Xms32m -Xmx64m</exec.vmArgs>
+            <exec.vmArgs>-Xms24m -Xmx32m</exec.vmArgs>
             <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
             <exec.mainClass>io.github.dreamtangerine.mdbora.jdbc.DriverExample</exec.mainClass>
             <exec.executable>java</exec.executable>
@@ -21,7 +21,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
             </goals>
             <properties>
-                <exec.vmArgs>-Xms32m -Xmx64m -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
+                <exec.vmArgs>-Xms32m -Xmx32m -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>${packageClassName}</exec.mainClass>
                 <exec.executable>java</exec.executable>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
             </goals>
             <properties>
-                <exec.vmArgs>-Xms32m -Xmx64m</exec.vmArgs>
+                <exec.vmArgs>-Xms32m -Xmx32m</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>${packageClassName}</exec.mainClass>
                 <exec.executable>java</exec.executable>
@@ -78,5 +78,13 @@
             <activatedProfiles>
                 <activatedProfile>release</activatedProfile>
             </activatedProfiles>
+        </action>
+    <action>
+            <actionName>CUSTOM-Verify</actionName>
+            <displayName>Verify</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>verify</goal>
+            </goals>
         </action>
 </actions>
