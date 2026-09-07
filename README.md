@@ -1,7 +1,7 @@
 # Mdbora JDBC
 
-[![License: MPL 2.0](https://img.shields%202.0-blue.svg](LICENSE)
-[![Java 11g.shields.io/badge/Java-11%2B-blue.svg](https://openjdk.org/)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![JDK](https://img.shields.io/badge/JDK-11-blue?logo=openjdk&logoColor=white)](https://openjdk.org/)
 
 Mdbora is a pure Java, read-only JDBC driver for Microsoft Access MDB and
 ACCDB database files.
